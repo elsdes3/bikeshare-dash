@@ -28,17 +28,12 @@ Build a dashboard about Toronto Bikeshare usage in 2021. This is work in progres
     │       └── main.yml              <- configuration file for CI build on Github Actions
     ├── Makefile                      <- Makefile with commands like `make lint` or `make build`
     ├── README.md                     <- The top-level README for developers using this project.
-    ├── environment.yml               <- configuration file to create environment to run project on Binder
     ├── data
     │   ├── raw                       <- Scripts to download or generate data
     |   └── processed                 <- merged and filtered data, sampled at daily frequency
     ├── *.ipynb                       <- Jupyter notebooks. Naming convention is a number (for ordering),
     │                                    and a short `-` delimited description, e.g. `1.0-jqp-initial-data-exploration`.
     ├── requirements.txt              <- base packages required to execute all Jupyter notebooks (incl. jupyter)
-    ├── src                           <- Source code for use in this project.
-    │   ├── __init__.py               <- Makes src a Python module
-    │   └── *.py                      <- Scripts to use in analysis for pre-processing, visualization, training, etc.
-    ├── papermill_runner.py           <- Python functions that execute system shell commands.
     └── tox.ini                       <- tox file with settings for running tox; see https://tox.readthedocs.io/en/latest/
 
 --------
