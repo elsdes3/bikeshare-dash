@@ -14,8 +14,7 @@
 2. [Project Organization](#project-organization)
 
 ## [About](#about)
-
-Build a dashboard about Toronto Bikeshare usage in 2021. This is work in progress.
+Build a dashboard about Toronto Bikeshare usage in 2021. See a screenshot of the dashboard (running locally) [here](https://github.com/elsdes3/bikeshare-dash/blob/main/reports/figures/screenshot.png).
 
 ## [Project Organization](#project-organization)
 
