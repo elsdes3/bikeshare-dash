@@ -7,8 +7,8 @@ env:
   DB_DRIVER: pymysql
   DB_USER: ${{ secrets.DB_USER }}
   DB_PASS: ${{ secrets.DB_PASS }}
-  MYSQL_HOST: ${{ secrets.DB_HOST }}
-  MYSQL_PORT: ${{ secrets.DB_PORT }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
 
 jobs:
   build:
