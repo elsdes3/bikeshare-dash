@@ -3,8 +3,8 @@ name: CI
 on: [push, pull_request]
 
 env:
-  DB_TYPE: = mysql
-  DB_DRIVER: = pymysql
+  DB_TYPE: mysql
+  DB_DRIVER: pymysql
   DB_USER: ${{ secrets.DB_USER }}
   DB_PASS: ${{ secrets.DB_PASS }}
   MYSQL_HOST: ${{ secrets.DB_HOST }}
