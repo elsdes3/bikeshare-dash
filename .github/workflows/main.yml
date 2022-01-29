@@ -2,6 +2,14 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  DB_TYPE: = mysql
+  DB_DRIVER: = pymysql
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASS: ${{ secrets.DB_PASS }}
+  MYSQL_HOST: ${{ secrets.DB_HOST }}
+  MYSQL_PORT: ${{ secrets.DB_PORT }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,5 +18,9 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: '3.9'
+    - run: |
+        sudo /etc/init.d/mysql start
+        systemctl status mysql.service
     - run: pip install tox
     - run: make lint
+    - run: make ci

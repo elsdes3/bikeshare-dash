@@ -18,12 +18,6 @@ lint:
 	@tox -e lint
 .PHONY: lint
 
-## Run jupyterlab with tox
-build:
-	@echo "+ $@"
-	@tox -e build
-.PHONY: build
-
 ## Remove Python artifacts
 clean-py:
 	@echo "+ $@"
@@ -36,6 +30,18 @@ dash:
 	@echo "+ $@"
 	@tox -e dash
 .PHONY: dash
+
+## Run jupyterlab with tox
+build:
+	@echo "+ $@"
+	@tox -e build
+.PHONY: build
+
+## Run CI build
+ci:
+	@echo "+ $@"
+	@tox -e ci
+.PHONY: ci
 
 #################################################################################
 # PROJECT RULES                                                                 #
