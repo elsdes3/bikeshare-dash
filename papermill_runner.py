@@ -6,6 +6,7 @@
 
 # pylint: disable=invalid-name
 
+import argparse
 import os
 from datetime import datetime
 from typing import Dict, List
@@ -19,8 +20,10 @@ output_notebook_dir = os.path.join(PROJ_ROOT_DIR, "executed_notebooks")
 raw_data_path = os.path.join(data_dir, "raw")
 
 zero_dict_nb_name = "0_get_bikeshare_data.ipynb"
+zero_dict_v2_nb_name = "0_get_bikeshare_data_v2.ipynb"
 one_dict_nb_name = "1_transform_bikeshare_data.ipynb"
 two_dict_nb_name = "2_delete_data.ipynb"
+two_dict_v2_nb_name = "2_delete_data_v2.ipynb"
 
 zero_dict = dict(
     url=(
@@ -40,6 +43,38 @@ zero_dict = dict(
     },
     geo_cols=["AREA_NAME", "geometry", "Shape__Area"],
 )
+zero_v2_dict = dict(
+    url="https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/package_show",
+    params={"id": "7e876c24-177c-4605-9cef-e50dd74c617f"},
+    years_wanted={2021: list(range(1, 12 + 1))},
+    about_params={"id": "2b44db0d-eea9-442d-b038-79335368ad5a"},
+    stations_cols_wanted=[
+        "station_id",
+        "name",
+        "physical_configuration",
+        "lat",
+        "lon",
+        "altitude",
+        "address",
+        "capacity",
+        "physicalkey",
+        "transitcard",
+        "creditcard",
+        "phone",
+    ],
+    date_cols=["Start Time", "End Time"],
+    nan_cols=[
+        "Start Station Id",
+        "End Station Id",
+        "Start Station Name",
+        "End Station Name",
+    ],
+    stations_db_name="torbikestations",
+    trips_table_name="trips",
+    station_stats_table_name="station_stats",
+    trips_stage_name="bikes_stage",
+    trips_file_format_name="COMMASEP_ONEHEADROW",
+)
 one_dict = dict(
     table_name="ridership",
     path_to_sql_cfg="../sql.ini",
@@ -50,6 +85,13 @@ one_dict = dict(
     neigh_params={"id": "4def3f65-2a65-4a4f-83c4-b2a4aed72d46"},
 )
 two_dict = dict(table_name="ridership", path_to_sql_cfg="../sql.ini")
+two_v2_dict = dict(
+    stations_db_name="torbikestations",
+    trips_table_name="trips",
+    station_stats_table_name="station_stats",
+    trips_stage_name="bikes_stage",
+    trips_file_format_name="COMMASEP_ONEHEADROW",
+)
 
 
 def papermill_run_notebook(
@@ -102,8 +144,33 @@ def run_notebooks(
 
 
 if __name__ == "__main__":
-    nb_dict_list = [zero_dict, one_dict, two_dict]
-    nb_name_list = [zero_dict_nb_name, one_dict_nb_name, two_dict_nb_name]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--ci-run",
+        type=str,
+        dest="ci_run",
+        default="yes",
+        help="whether to run CI build",
+    )
+    args = parser.parse_args()
+
+    zero_v2_dict.update({"ci_run": args.ci_run})
+    two_v2_dict.update({"ci_run": args.ci_run})
+
+    nb_dict_list = [
+        # zero_dict,
+        zero_v2_dict,
+        # one_dict,
+        # two_dict,
+        two_v2_dict,
+    ]
+    nb_name_list = [
+        # zero_dict_nb_name,
+        zero_dict_v2_nb_name,
+        # one_dict_nb_name,
+        # two_dict_nb_name,
+        two_dict_v2_nb_name,
+    ]
 
     notebook_list = [
         {os.path.join(PROJ_ROOT_DIR, nb_name): nb_dict}

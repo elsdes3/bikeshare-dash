@@ -24,3 +24,10 @@ jobs:
     - run: pip install tox
     - run: make lint
     - run: make ci
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASS: ${{ secrets.SNOWFLAKE_PASS }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_DB_SCHEMA: ${{ secrets.SNOWFLAKE_DB_SCHEMA }}
+        DB_NAME: ${{ secrets.SNOWFLAKE_DB_NAME }}

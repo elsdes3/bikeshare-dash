@@ -5,7 +5,7 @@
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROJECT_NAME = "bikeshare-dash"
 REPO_NAME = "bikeshare-dash"
-PYTHON_VERSION = "3.9.5"
+PYTHON_VERSION = "3.9.7"
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -37,11 +37,23 @@ build:
 	@tox -e build
 .PHONY: build
 
+## Run CI build locally
+ci-local:
+	@echo "+ $@"
+	@tox -e ci -- "no"
+.PHONY: ci-local
+
 ## Run CI build
 ci:
 	@echo "+ $@"
-	@tox -e ci
+	@tox -e ci -- "yes"
 .PHONY: ci
+
+## Convert notebooks to HTML
+nb-convert:
+	@echo "+ $@"
+	@tox -e nbconvert -- "executed_notebooks"
+.PHONY: nb-convert
 
 #################################################################################
 # PROJECT RULES                                                                 #
