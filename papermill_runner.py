@@ -161,18 +161,18 @@ if __name__ == "__main__":
     two_v2_dict.update({"ci_run": args.ci_run})
 
     nb_dict_list = [
-        # zero_dict,
         zero_v2_dict,
-        # one_dict,
-        # two_dict,
         two_v2_dict,
+        zero_dict,
+        one_dict,
+        two_dict,
     ]
     nb_name_list = [
-        # zero_dict_nb_name,
         zero_dict_v2_nb_name,
-        # one_dict_nb_name,
-        # two_dict_nb_name,
         two_dict_v2_nb_name,
+        zero_dict_nb_name,
+        one_dict_nb_name,
+        two_dict_nb_name,
     ]
 
     notebook_list = [

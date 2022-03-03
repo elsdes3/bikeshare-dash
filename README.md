@@ -12,7 +12,8 @@
 ## [Table of Contents](#table-of-contents)
 1. [About](#about)
 2. [Notebooks](#notebooks)
-3. [Project Organization](#project-organization)
+3. [Notes](#notes)
+4. [Project Organization](#project-organization)
 
 ## [About](#about)
 Build a dashboard about Toronto Bikeshare usage during the months of January to October (inclusive) of the year 2021. See a screenshot of the dashboard (running locally) [here](https://github.com/elsdes3/bikeshare-dash/blob/main/reports/figures/screenshot.png).
@@ -24,6 +25,9 @@ Build a dashboard about Toronto Bikeshare usage during the months of January to 
    - process merged raw data
 2. `2_delete_data.ipynb` ([view](https://nbviewer.org/github/elsdes3/bikeshare-dash/blob/main/2_delete_data.ipynb))
    - delete all raw and processed data and any charts saved during data analysis
+
+## [Notes](#notes)
+1. A notebook with a filename ending in `_v2.ipynb` contains analysis that is in progress.
 
 ## [Project Organization](#project-organization)
 
