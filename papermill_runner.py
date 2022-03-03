@@ -44,7 +44,10 @@ zero_dict = dict(
     geo_cols=["AREA_NAME", "geometry", "Shape__Area"],
 )
 zero_v2_dict = dict(
-    url="https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/package_show",
+    url=(
+        "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/"
+        "package_show"
+    ),
     params={"id": "7e876c24-177c-4605-9cef-e50dd74c617f"},
     years_wanted={2021: list(range(1, 12 + 1))},
     about_params={"id": "2b44db0d-eea9-442d-b038-79335368ad5a"},
