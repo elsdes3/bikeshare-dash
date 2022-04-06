@@ -37,17 +37,29 @@ build:
 	@tox -e build
 .PHONY: build
 
-## Run CI build locally
-ci-local:
+## Run CI build locally (creation)
+ci-local-create:
 	@echo "+ $@"
-	@tox -e ci -- "no"
-.PHONY: ci-local
+	@tox -e ci -- --ci-run "no"  --action "create"
+.PHONY: ci-local-create
 
-## Run CI build
-ci:
+## Run CI build locally (deletion)
+ci-local-delete:
 	@echo "+ $@"
-	@tox -e ci -- "yes"
-.PHONY: ci
+	@tox -e ci -- --ci-run "no"  --action "delete"
+.PHONY: ci-local-delete
+
+## Run CI build (creation)
+ci-create:
+	@echo "+ $@"
+	@tox -e ci -- --ci-run "yes"  --action "create"
+.PHONY: ci-create
+
+## Run CI build (deletion)
+ci-delete:
+	@echo "+ $@"
+	@tox -e ci -- --ci-run "yes"  --action "delete"
+.PHONY: ci-delete
 
 ## Convert notebooks to HTML
 nb-convert:

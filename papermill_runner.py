@@ -155,30 +155,29 @@ if __name__ == "__main__":
         default="yes",
         help="whether to run CI build",
     )
+    parser.add_argument(
+        "--action",
+        type=str,
+        dest="action",
+        default="create",
+        help="whether to create or destroy AWS resources",
+    )
     args = parser.parse_args()
 
     zero_v2_dict.update({"ci_run": args.ci_run})
     two_v2_dict.update({"ci_run": args.ci_run})
 
-    nb_dict_list = [
-        zero_v2_dict,
-        two_v2_dict,
-        zero_dict,
-        one_dict,
-        two_dict,
-    ]
-    nb_name_list = [
-        zero_dict_v2_nb_name,
-        two_dict_v2_nb_name,
-        zero_dict_nb_name,
-        one_dict_nb_name,
-        two_dict_nb_name,
-    ]
-
+    if args.action == "create":
+        nb_dict_list = [zero_v2_dict]
+        nb_name_list = [zero_dict_v2_nb_name]
+    else:
+        nb_dict_list = [two_v2_dict]
+        nb_name_list = [two_dict_v2_nb_name]
     notebook_list = [
         {os.path.join(PROJ_ROOT_DIR, nb_name): nb_dict}
         for nb_dict, nb_name in zip(nb_dict_list, nb_name_list)
     ]
+
     run_notebooks(
         notebooks_list=notebook_list,
         output_notebook_directory=output_notebook_dir,

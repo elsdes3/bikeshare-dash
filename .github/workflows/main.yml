@@ -2,28 +2,43 @@ name: CI
 
 on: [push, pull_request]
 
-env:
-  DB_TYPE: mysql
-  DB_DRIVER: pymysql
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASS: ${{ secrets.DB_PASS }}
-  DB_HOST: ${{ secrets.DB_HOST }}
-  DB_PORT: ${{ secrets.DB_PORT }}
-
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
       with:
         python-version: '3.9'
-    - run: |
-        sudo /etc/init.d/mysql start
-        systemctl status mysql.service
     - run: pip install tox
     - run: make lint
-    - run: make ci
+  create:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.9'
+    - run: pip install tox
+    - run: make ci-create
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASS: ${{ secrets.SNOWFLAKE_PASS }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_DB_SCHEMA: ${{ secrets.SNOWFLAKE_DB_SCHEMA }}
+        DB_NAME: ${{ secrets.SNOWFLAKE_DB_NAME }}
+  delete:
+    runs-on: ubuntu-latest
+    needs: create
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.9'
+    - run: pip install tox
+    - run: make ci-delete
       env:
         SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
         SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
