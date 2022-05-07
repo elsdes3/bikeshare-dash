@@ -1,0 +1,66 @@
+---
+- name: Configure Prefect Cloud
+  hosts: localhost
+  connection: local
+  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  gather_facts: false
+
+  vars:
+    prefect_s3_bucket: prefect-orion-storage
+
+  tasks:
+    - name: Ensure empty S3 bucket exists for use by Prefect Cloud
+      amazon.aws.s3_bucket:
+        name: "{{ prefect_s3_bucket }}"
+        state: present
+        public_access:
+            block_public_acls: true
+            ignore_public_acls: true
+            block_public_policy: true
+            restrict_public_buckets: true
+        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+      tags:
+        - aws-create
+    - name: Ensure Prefect Cloud S3 bucket does not exist
+      amazon.aws.aws_s3:
+        bucket: "{{ prefect_s3_bucket }}"
+        mode: delete
+        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+      tags:
+        - aws-delete
+    - name: Ensure Prefect storage is configured
+      ansible.builtin.expect:
+        command: prefect storage create
+        responses:
+          'Select a storage type to create': 5
+          'BUCKET': "{{ prefect_s3_bucket }}"
+          'REGION NAME \(optional\)': "{{ lookup('env', 'AWS_REGION') }}"
+          'PROFILE NAME \(optional\)': "\n"
+          'AWS ACCESS KEY ID \(optional\)': "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+          'AWS SESSION TOKEN \(optional\)': "\n"
+          'AWS SECRET ACCESS KEY \(optional\)': "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+          'Choose a name for this storage configuration': "{{ prefect_storage_config_name }}"
+          'You do not have a default storage configuration. Would you like to set this as your default storage? [Y/n]:': 'Y'
+        timeout: 20
+      register: pstorage
+      changed_when:
+        - "'Validating configuration...' in pstorage.stdout"
+        - "'Registered storage' in pstorage.stdout"
+        - "'with identifier' in pstorage.stdout"
+      failed_when:
+        - "'Validating configuration...' not in pstorage.stdout"
+        - "'Registered storage' not in pstorage.stdout"
+        - "'with identifier' not in pstorage.stdout"
+        - "'Choose a new name for this storage configuration' in pstorage.stdout"
+        - "'Client error '404 Not Found' for url' in pstorage.stdout"
+        - "'An exception occurred' in pstorage.stdout"
+        - "pstorage.rc != 0"
+      tags:
+        - configure
+    - name: Show outputs of setting Prefect configuration
+      ansible.builtin.debug:
+        msg: "{{ pstorage.stdout }}"
+      tags:
+        - configure

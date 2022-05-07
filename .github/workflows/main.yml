@@ -2,6 +2,19 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PASS: ${{ secrets.SNOWFLAKE_PASS }}
+  SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+  SNOWFLAKE_DB_SCHEMA: ${{ secrets.SNOWFLAKE_DB_SCHEMA }}
+  DB_NAME: ${{ secrets.SNOWFLAKE_DB_NAME }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  PREFECT_CLOUD_API_URL: ${{ secrets.PREFECT_CLOUD_API_URL }}
+  PREFECT_CLOUD_API_KEY: ${{ secrets.PREFECT_CLOUD_API_KEY }}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -12,7 +25,7 @@ jobs:
         python-version: '3.9'
     - run: pip install tox
     - run: make lint
-  create:
+  create-resources:
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -21,34 +34,24 @@ jobs:
       with:
         python-version: '3.9'
     - run: pip install tox
-    - run: make ci-create
-      env:
-        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-        SNOWFLAKE_PASS: ${{ secrets.SNOWFLAKE_PASS }}
-        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-        SNOWFLAKE_DB_SCHEMA: ${{ secrets.SNOWFLAKE_DB_SCHEMA }}
-        DB_NAME: ${{ secrets.SNOWFLAKE_DB_NAME }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-  delete:
+    - run: make aws-create
+  workflow:
     runs-on: ubuntu-latest
-    needs: create
+    needs: create-resources
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
       with:
         python-version: '3.9'
     - run: pip install tox
-    - run: make ci-delete
-      env:
-        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-        SNOWFLAKE_PASS: ${{ secrets.SNOWFLAKE_PASS }}
-        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-        SNOWFLAKE_DB_SCHEMA: ${{ secrets.SNOWFLAKE_DB_SCHEMA }}
-        DB_NAME: ${{ secrets.SNOWFLAKE_DB_NAME }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
+    - run: make ci
+  delete-resources:
+    runs-on: ubuntu-latest
+    needs: workflow
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.9'
+    - run: pip install tox
+    - run: make aws-delete

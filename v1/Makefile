@@ -2,9 +2,6 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-# .EXPORT_ALL_VARIABLES:
-# ANSIBLE_LOCALHOST_WARNING=false
-
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -23,23 +20,11 @@ clean-py:
 	@find . -type d -name "__pycache__" -delete
 .PHONY: clean-py
 
-## Create AWS resources
-aws-create:
+## Run dash application
+dash:
 	@echo "+ $@"
-	@tox -e aws -- "aws-create"
-.PHONY: aws-create
-
-## Configure Prefect Cloud and Run Jupyterlab
-build:
-	@echo "+ $@"
-	@tox -e build -- --prefect-storage-config-name "madeup-s3-storage21" --tags "configure"
-.PHONY: build
-
-## Run dashboard v2 application
-dash-v2:
-	@echo "+ $@"
-	@tox -e dashv2
-.PHONY: dash-v2
+	@tox -e dash
+.PHONY: dash
 
 ## Run data pipeline to create resources
 pipe-create:
@@ -53,17 +38,35 @@ pipe-delete:
 	@tox -e pipe -- --action "delete"
 .PHONY: pipe-delete
 
-## Run CI build
-ci:
+## Run jupyterlab with tox
+build:
 	@echo "+ $@"
-	@tox -e ci -- --prefect-storage-config-name "madeup-s3-storage22" --tags "configure"
-.PHONY: ci
+	@tox -e build
+.PHONY: build
 
-## Delete AWS resources
-aws-delete:
+## Run CI build locally (creation)
+ci-local-create:
 	@echo "+ $@"
-	@tox -e aws -- "aws-delete"
-.PHONY: aws-delete
+	@tox -e ci -- --ci-run "no"  --action "create"
+.PHONY: ci-local-create
+
+## Run CI build locally (deletion)
+ci-local-delete:
+	@echo "+ $@"
+	@tox -e ci -- --ci-run "no"  --action "delete"
+.PHONY: ci-local-delete
+
+## Run CI build (creation)
+ci-create:
+	@echo "+ $@"
+	@tox -e ci -- --ci-run "yes"  --action "create"
+.PHONY: ci-create
+
+## Run CI build (deletion)
+ci-delete:
+	@echo "+ $@"
+	@tox -e ci -- --ci-run "yes"  --action "delete"
+.PHONY: ci-delete
 
 ## Convert notebooks to HTML
 nb-convert:

@@ -1,334 +1,115 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""Streamlit dashboard configuration."""
 
-"""Plotly Dash Application Code."""
+# pylint: disable=invalid-name,broad-except,redefined-outer-name
+# pylint: disable=consider-using-f-string
 
-# pylint: disable=invalid-name,too-many-locals
+import argparse
 
+import altair as alt
 import pandas as pd
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
+import streamlit as st
 
-import py_helpers as ph
-
-hourly_trips_by_user = pd.read_csv(
-    "data/processed/bikeshare_hourly_aggregations.csv"
-)
-daily_trips_by_user = pd.read_csv(
-    "data/processed/bikeshare_daily_aggregations.csv", parse_dates=["date"]
-)
-daily_trips_by_user_w_weather = pd.read_csv(
-    "data/processed/bikeshare_daily_aggregations_for_weather.csv",
-    parse_dates=["date"],
-)
-
-neighbourhoods = [
-    "Waterfront Communities-The Island (77)",
-    "Niagara (82)",
-    "Church-Yonge Corridor (75)",
-    "North St.James Town (74)",
-    "Regent Park (72)",
-    "All",
-]
-months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "All",
-]
-
-external_stylesheets = [
-    {
-        "href": "https://fonts.googleapis.com/css2?"
-        "family=Lato:wght@400;700&display=swap",
-        "rel": "stylesheet",
-    },
-]
-app = Dash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
-app.title = "Bikeshare Toronto Analytics: Understand Your Users!"
-
-app.layout = html.Div(
-    children=[
-        html.Div(
-            children=[
-                html.P(children="🚴", className="header-emoji"),
-                html.H1(
-                    children="Toronto Bikeshare 2021 Insights",
-                    className="header-title",
-                ),
-                html.P(
-                    children=(
-                        "Analyze the behavior of bikeshare users\n"
-                        "during the year 2021"
-                    ),
-                    className="header-description",
-                ),
-            ],
-            className="header",
-        ),
-        html.Div(
-            children=[
-                html.Div(
-                    children=[
-                        html.Div(
-                            children="Neighbourhood", className="menu-title"
-                        ),
-                        dcc.Dropdown(
-                            id="neighbourhood-filter",
-                            options=[
-                                {"label": neigh, "value": neigh}
-                                for neigh in neighbourhoods
-                            ],
-                            value="All",
-                            clearable=False,
-                            className="dropdown",
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.Div(children="Month", className="menu-title"),
-                        dcc.Dropdown(
-                            id="month-filter",
-                            options=[
-                                {"label": month, "value": month}
-                                for month in months
-                            ],
-                            value="All",
-                            clearable=False,
-                            className="dropdown",
-                        ),
-                    ]
-                ),
-            ],
-            className="menu",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    html.H2(
-                        children="When are Members Using Toronto Bikeshare?",
-                        className="section-header-title",
-                    ),
-                    className="section-header-card",
-                )
-            ],
-            className="section-header-wrapper",
-        ),
-        html.Div(
-            children=[
-                html.Div(
-                    children=dcc.Graph(
-                        id="daily-chart",
-                        config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-            ],
-            className="wrapper",
-        ),
-        html.Div(
-            children=[
-                html.Div(
-                    children=dcc.Graph(
-                        id="weekday-chart",
-                        config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-            ],
-            className="wrapper",
-        ),
-        html.Div(
-            children=[
-                html.Div(
-                    children=dcc.Graph(
-                        id="hourly-chart",
-                        config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-            ],
-            className="wrapper",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    html.H2(
-                        children="How does Weather Affect Ridership?",
-                        className="section-header-title",
-                    ),
-                    className="section-header-card",
-                )
-            ],
-            className="section-header-wrapper",
-        ),
-        html.Div(
-            children=[
-                html.Div(
-                    children=dcc.Graph(
-                        id="daily-chart-weather",
-                        config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-            ],
-            className="wrapper",
-        ),
-    ]
-)
+BACKGROUND_COLOR = "white"
+COLOR = "black"
 
 
-@app.callback(
-    [
-        Output("hourly-chart", "figure"),
-        Output("weekday-chart", "figure"),
-        Output("daily-chart", "figure"),
-        Output("daily-chart-weather", "figure"),
-    ],
-    [
-        Input("neighbourhood-filter", "value"),
-        Input("month-filter", "value"),
-    ],
-)
-def update_charts(neighbourhood, month):
-    """Update Charts Based on User Selection."""
-    l_colors = ["black", "#BEBEBE"]
-    m_types = ["Annual", "Casual"]
-    neighbourhoods_list = [
-        "Waterfront Communities-The Island (77)",
-        "Niagara (82)",
-        "Church-Yonge Corridor (75)",
-        "North St.James Town (74)",
-        "Regent Park (72)",
-        "All",
-    ]
+@st.cache(ttl=24 * 60 * 60)
+def filter_by_col(col: str, value: int) -> pd.DataFrame:
+    """Filter data by a column."""
+    dff = df[df[col].dt.hour <= value]
+    return dff
 
-    rank = neighbourhoods_list.index(neighbourhood) + 1
-    neigh_suffix = (
-        f" in {neighbourhood.split(' (')[0]}" if neighbourhood != "All" else ""
-    )
-    neigh_suffix_with_rank = (
-        (
-            f" in {neighbourhood.split(' (')[0]} (rank {rank} by "
-            "avg. daily departures)"
-        )
-        if neighbourhood != "All"
-        else ""
+
+def configure_page() -> None:
+    """Configure page setup using HTML."""
+    # Set wide page format
+    st.set_page_config(layout="wide")
+    # Remove whitespace from the top of the page and sidebar
+    st.markdown(
+        """
+        <style>
+            .css-18e3th9 {
+                    padding-top: 0rem;
+                    padding-bottom: 2rem;
+                    padding-left: 3rem;
+                    padding-right: 3rem;
+                }
+            .css-1d391kg {
+                    padding-top: 3.5rem;
+                    padding-right: 1rem;
+                    padding-bottom: 3.5rem;
+                    padding-left: 1rem;
+                }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    # Filter data based on user selections
-    month_mask = f" & month == '{month}'" if month != "All" else ""
-    neigh_mask = f"area_name == '{neighbourhood}'"
-    data_filtered = daily_trips_by_user.query(f"{neigh_mask}{month_mask}")
-    data_filter_for_static_facet_chart = daily_trips_by_user.query(neigh_mask)
 
-    # Daily line chart
-    daily_trips_by_user_by_neigh = ph.plot_daily_trips_line_chart(
-        data_filtered,
-        month=month,
-        l_colors=l_colors,
-        x="date",
-        y="num_trips",
-        m_types=m_types,
-        annotation_texts=[
-            "Has a<br>Peak Season",
-            "Shows higher<br>weekly variance",
-        ],
-        ptitle=f"Daily Trips{neigh_suffix_with_rank} in ",
-    )
-
-    # Daily faceted bar chart
-    quarter = 3
-    m_names_dict = {
-        1: ["January", "February", "March"],
-        2: ["April", "May", "June"],
-        3: ["July", "August", "September"],
-    }
-    d_names = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-    months_order = m_names_dict[quarter]
-    # # Transform data
-    quarter_weekday_trips_by_user = (
-        data_filter_for_static_facet_chart.assign(
-            weekday=data_filter_for_static_facet_chart["date"].dt.day_name()
-        )
-        .assign(quarter=data_filter_for_static_facet_chart["date"].dt.quarter)
-        .query(f"quarter == {quarter}")
-        .groupby(
-            ["user_type", "quarter", "month", "weekday"],
-            as_index=False,
-        )["num_trips"]
-        .mean()
-        .set_index("weekday")
-        .loc[d_names]
-        .reset_index()
-        .set_index("month")
-        .loc[months_order]
-        .reset_index()
-    )
-    quarter_weekday_trips_by_user["weekday"] = quarter_weekday_trips_by_user[
-        "weekday"
-    ].str[:3]
-    # # Title
-    ptitle_suffix = f" in Q{quarter} of 2021" + neigh_suffix
-    # # Plot
-    weekday_trips_by_q_fig = ph.plot_faceted_bar_chart(
-        quarter_weekday_trips_by_user,
-        x="weekday",
-        y="num_trips",
-        color_by_col="user_type",
-        facet_col="month",
-        colors=["black", "#BEBEBE"],
-        ptitle=f"Monthly Trips by Weekday{ptitle_suffix}",
-        facet_col_vals=m_names_dict[quarter],
-    )
-
-    # Hourly
-    hourly_trips_by_user_by_neigh = hourly_trips_by_user.query(neigh_mask)
-    hourly_grouped_barchart_fig = ph.plot_grouped_bar_chart(
-        hourly_trips_by_user_by_neigh,
-        l_colors,
-        m_types,
-        f"Hourly Trips{neigh_suffix} in 2021",
-    )
-    ptitle = f"Relationship between Ridership and Temp.{neigh_suffix} in 2021"
-
-    # Daily scatter with weather
-    daily_trips_weather_filtered = daily_trips_by_user_w_weather.query(
-        f"area_name == '{neighbourhood}'"
-    )
-    daily_trips_by_user_by_neigh_weather_fig = ph.plot_scatter(
-        daily_trips_weather_filtered,
-        x="tavg",
-        y="num_trips",
-        m_types=["Annual", "Casual"],
-        l_colors=["black", "#BEBEBE"],
-        ptitle=ptitle,
-    )
-
-    return [
-        hourly_grouped_barchart_fig,
-        weekday_trips_by_q_fig,
-        daily_trips_by_user_by_neigh,
-        daily_trips_by_user_by_neigh_weather_fig,
-    ]
+@st.cache
+def load_data(url: str, nrows: int, date_col: str) -> pd.DataFrame:
+    """Get data."""
+    df = pd.read_csv(url, nrows=nrows)
+    df.columns = df.columns.str.lower()
+    df[date_col] = pd.to_datetime(df[date_col])
+    # query = f"""
+    #         SELECT *
+    #         FROM {args.trips_table_name}
+    #         """
+    # df = phw.run_snowflake_query(query)
+    return df
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--trips-table-name",
+        type=str,
+        dest="trips_table_name",
+        default="trips",
+        help="name of trips table",
+    )
+    args = parser.parse_args()
+
+    DATE_COLUMN = "date/time"
+    DATA_URL = (
+        "https://s3-us-west-2.amazonaws.com/"
+        "streamlit-demo-data/uber-raw-data-sep14.csv.gz"
+    )
+    N_ROWS = 80_000
+    N_ROWS_TO_SHOW = 10
+
+    configure_page()
+    st.title("Uber pickups in NYC")
+
+    # data_load_state = st.text("Loading data...")
+    df = load_data(DATA_URL, N_ROWS, DATE_COLUMN)
+    # data_load_state.text("Done! (using st.cache)")
+
+    if st.checkbox("Show raw data"):
+        st.subheader(f"Showing {len(df.head(N_ROWS_TO_SHOW)):,} rows of data")
+        st.write(df.head(N_ROWS_TO_SHOW))
+
+    st_obj = st.sidebar
+    st_obj.markdown("## PAGE TITLE")
+
+    # Some number in the range 0-23
+    hour_to_filter = st.sidebar.slider("HOUR OF DAY", 0, 23, 17)
+
+    filtered_data = filter_by_col(DATE_COLUMN, hour_to_filter)
+
+    # st.subheader("Number of pickups by hour")
+    st.markdown("#### Number of pickups by hour")
+
+    base = alt.Chart(
+        filtered_data.assign(hour=filtered_data[DATE_COLUMN].dt.hour)
+    )
+    chart = base.mark_bar().encode(
+        x=alt.X("hour:Q", title="Hour of Day", bin=True),
+        y="count()",
+        tooltip=["hour"],
+    )
+    st.altair_chart(chart, use_container_width=True)

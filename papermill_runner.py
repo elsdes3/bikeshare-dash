@@ -6,7 +6,6 @@
 
 # pylint: disable=invalid-name
 
-import argparse
 import os
 from datetime import datetime
 from typing import Dict, List
@@ -19,81 +18,12 @@ output_notebook_dir = os.path.join(PROJ_ROOT_DIR, "executed_notebooks")
 
 raw_data_path = os.path.join(data_dir, "raw")
 
-zero_dict_nb_name = "0_get_bikeshare_data.ipynb"
-zero_dict_v2_nb_name = "0_get_bikeshare_data_v2.ipynb"
-one_dict_nb_name = "1_transform_bikeshare_data.ipynb"
-two_dict_nb_name = "2_delete_data.ipynb"
-two_dict_v2_nb_name = "2_delete_data_v2.ipynb"
+three_dict_v2_nb_name = "03_data_pipe_v2.ipynb"
 
-zero_dict = dict(
-    url=(
-        "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/"
-        "package_show"
-    ),
-    params={"id": "7e876c24-177c-4605-9cef-e50dd74c617f"},
-    about_params={"id": "2b44db0d-eea9-442d-b038-79335368ad5a"},
-    path_to_sql_cfg="../sql.ini",
-    table_name="ridership",
-    n_rows_to_append_to_db=10_000,
-    dtypes_dict={
-        "Trip Duration": "int",
-        "Start Station Id": "int",
-        "End Station Id": "float",
-        "Bike Id": "float",
-    },
-    geo_cols=["AREA_NAME", "geometry", "Shape__Area"],
-)
-zero_v2_dict = dict(
-    url=(
-        "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/"
-        "package_show"
-    ),
-    params={"id": "7e876c24-177c-4605-9cef-e50dd74c617f"},
-    years_wanted={2021: list(range(1, 12 + 1))},
-    about_params={"id": "2b44db0d-eea9-442d-b038-79335368ad5a"},
-    stations_cols_wanted=[
-        "station_id",
-        "name",
-        "physical_configuration",
-        "lat",
-        "lon",
-        "altitude",
-        "address",
-        "capacity",
-        "physicalkey",
-        "transitcard",
-        "creditcard",
-        "phone",
-    ],
-    date_cols=["Start Time", "End Time"],
-    nan_cols=[
-        "Start Station Id",
-        "End Station Id",
-        "Start Station Name",
-        "End Station Name",
-    ],
-    stations_db_name="torbikestations",
-    trips_table_name="trips",
-    station_stats_table_name="station_stats",
-    trips_stage_name="bikes_stage",
-    trips_file_format_name="COMMASEP_ONEHEADROW",
-)
-one_dict = dict(
-    table_name="ridership",
-    path_to_sql_cfg="../sql.ini",
-    neigh_geo_url=(
-        "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/"
-        "package_show"
-    ),
-    neigh_params={"id": "4def3f65-2a65-4a4f-83c4-b2a4aed72d46"},
-)
-two_dict = dict(table_name="ridership", path_to_sql_cfg="../sql.ini")
-two_v2_dict = dict(
-    stations_db_name="torbikestations",
-    trips_table_name="trips",
-    station_stats_table_name="station_stats",
-    trips_stage_name="bikes_stage",
-    trips_file_format_name="COMMASEP_ONEHEADROW",
+three_dict = dict(
+    scaling_factor=6,
+    cols_to_scale=["A", "D", "E"],
+    nrows=[5, 25, 150, 300, 500, 12, 75, 125, 600, 30],
 )
 
 
@@ -147,32 +77,9 @@ def run_notebooks(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--ci-run",
-        type=str,
-        dest="ci_run",
-        default="yes",
-        help="whether to run CI build",
-    )
-    parser.add_argument(
-        "--action",
-        type=str,
-        dest="action",
-        default="create",
-        help="whether to create or destroy AWS resources",
-    )
-    args = parser.parse_args()
+    nb_dict_list = [three_dict]
+    nb_name_list = [three_dict_v2_nb_name]
 
-    zero_v2_dict.update({"ci_run": args.ci_run})
-    two_v2_dict.update({"ci_run": args.ci_run})
-
-    if args.action == "create":
-        nb_dict_list = [zero_v2_dict]
-        nb_name_list = [zero_dict_v2_nb_name]
-    else:
-        nb_dict_list = [two_v2_dict]
-        nb_name_list = [two_dict_v2_nb_name]
     notebook_list = [
         {os.path.join(PROJ_ROOT_DIR, nb_name): nb_dict}
         for nb_dict, nb_name in zip(nb_dict_list, nb_name_list)
