@@ -2,8 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-# .EXPORT_ALL_VARIABLES:
-# ANSIBLE_LOCALHOST_WARNING=false
+STORAGE_NAME = madeup-s3-storage29
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -32,7 +31,7 @@ aws-create:
 ## Configure Prefect Cloud and Run Jupyterlab
 build:
 	@echo "+ $@"
-	@tox -e build -- --prefect-storage-config-name "madeup-s3-storage21" --tags "configure"
+	@tox -e build -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure"
 .PHONY: build
 
 ## Run dashboard v2 application
@@ -56,7 +55,7 @@ pipe-delete:
 ## Run CI build
 ci:
 	@echo "+ $@"
-	@tox -e ci -- --prefect-storage-config-name "madeup-s3-storage22" --tags "configure"
+	@tox -e ci -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure"
 .PHONY: ci
 
 ## Delete AWS resources

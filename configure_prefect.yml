@@ -1,8 +1,8 @@
 ---
-- name: Configure Prefect Cloud
+- name: Configure Prefect Cloud and Create Cloud Storage
   hosts: localhost
   connection: local
-  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  any_errors_fatal: true
   gather_facts: false
 
   vars:
@@ -49,14 +49,11 @@
         - "'Validating configuration...' in pstorage.stdout"
         - "'Registered storage' in pstorage.stdout"
         - "'with identifier' in pstorage.stdout"
-      failed_when:
-        - "'Validating configuration...' not in pstorage.stdout"
-        - "'Registered storage' not in pstorage.stdout"
-        - "'with identifier' not in pstorage.stdout"
-        - "'Choose a new name for this storage configuration' in pstorage.stdout"
-        - "'Client error '404 Not Found' for url' in pstorage.stdout"
-        - "'An exception occurred' in pstorage.stdout"
-        - "pstorage.rc != 0"
+      failed_when: >
+        ("Choose a new name for this storage configuration" in pstorage.stdout) or
+        ("Client error '404 Not Found' for url" in pstorage.stdout) or
+        ("An exception occurred" in pstorage.stdout) or
+        (pstorage.rc != 0)
       tags:
         - configure
     - name: Show outputs of setting Prefect configuration
