@@ -2,7 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-STORAGE_NAME = madeup-s3-storage30
+STORAGE_NAME = madeup-s3-storage31
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -45,6 +45,12 @@ build-configure-auto:
 	@echo "+ $@"
 	@tox -e build -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure" --action "run_nbs"
 .PHONY: build-configure-auto
+
+## Configure local env to use Prefect Cloud, Set Prefect Storage and run data pipeline script
+reuse-run-pipe:
+	@echo "+ $@"
+	@tox -e build -- --tags "reuse" --action "run_pipe"
+.PHONY: reuse-run-pipe
 
 ## Run dashboard v2 application
 dash-v2:

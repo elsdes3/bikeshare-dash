@@ -76,9 +76,14 @@ In progress.
 
 The CI run is similar OPTION 2 above. So, it assumes that the three environment variables for OPTION 2 above have been set as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). As discussed for OPTION 2 above, `PREFECT_CLOUD_STORAGE_ID` must be set since Prefect storage will not be configured from scratch (as is the case in OPTION 1 above) during the CI run. Instead, pre-existing storage will be set as the default Prefect storage (OPTION 2) and then [used to store the outputs of tasks and flows](https://orion-docs.prefect.io/concepts/storage/). The CI run will not start an interactive Python environment (Jupyter Lab) to run ETL jobs using Prefect flows. Instead, it will programmatically run notebooks thereby running all Prefect flows contained in this notebooks.
 
-To delete cloud storage (AWS S3), run
+To delete cloud storage (AWS S3), use
 ```bash
 make aws-delete
+```
+
+The data pipeline is also run similar to OPTION 2 above. It too assumes that the three environment variables for OPTION 2 are set since it will use pre-existing storage as the default Prefect storage. It will not programmatically run notebooks (as is the case for the CI run), but it will run a standalone Python script which defines the data pipeline as a Prefect flow. To run the data pipeline, use
+```bash
+make reuse-run-pipe
 ```
 
 ## [Notes](#notes)
