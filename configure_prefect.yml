@@ -56,8 +56,24 @@
         (pstorage.rc != 0)
       tags:
         - configure
-    - name: Show outputs of setting Prefect configuration
+    - name: Show outputs of configuring Prefect storage
       ansible.builtin.debug:
         msg: "{{ pstorage.stdout }}"
       tags:
         - configure
+    - name: Ensure default Prefect storage is set
+      ansible.builtin.shell: >
+        prefect storage set-default {{ lookup('env', 'PREFECT_CLOUD_STORAGE_ID') }}
+      register: pstoreset
+      changed_when:
+        - "'Updated default storage' in pstoreset.stdout"
+      failed_when: >
+        ("Updated default storage" not in pstoreset.stdout) or
+        (pstoreset.rc != 0)
+      tags:
+        - reuse
+    - name: Show outputs of setting default Prefect storage
+      ansible.builtin.debug:
+        msg: "{{ pstoreset.stdout }}"
+      tags:
+        - reuse

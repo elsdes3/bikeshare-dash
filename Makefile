@@ -2,7 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-STORAGE_NAME = madeup-s3-storage29
+STORAGE_NAME = madeup-s3-storage30
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -28,11 +28,23 @@ aws-create:
 	@tox -e aws -- "aws-create"
 .PHONY: aws-create
 
-## Configure Prefect Cloud and Run Jupyterlab
-build:
+## Configure local env to use Prefect Cloud, Configure Prefect Storage and Run Jupyterlab
+build-configure:
 	@echo "+ $@"
-	@tox -e build -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure"
-.PHONY: build
+	@tox -e build -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure" --action "jupyterlab"
+.PHONY: build-configure
+
+## Configure local env to use Prefect Cloud, Set Prefect Storage and Run Jupyterlab
+build-reuse:
+	@echo "+ $@"
+	@tox -e build -- --tags "reuse" --action "jupyterlab"
+.PHONY: build-reuse
+
+## Configure local env to use Prefect Cloud, Configure Prefect Storage and programmatically run notebooks
+build-configure-auto:
+	@echo "+ $@"
+	@tox -e build -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure" --action "run_nbs"
+.PHONY: build-configure-auto
 
 ## Run dashboard v2 application
 dash-v2:
@@ -40,22 +52,10 @@ dash-v2:
 	@tox -e dashv2
 .PHONY: dash-v2
 
-## Run data pipeline to create resources
-pipe-create:
-	@echo "+ $@"
-	@tox -e pipe -- --action "create"
-.PHONY: pipe-create
-
-## Run data pipeline to delete resources
-pipe-delete:
-	@echo "+ $@"
-	@tox -e pipe -- --action "delete"
-.PHONY: pipe-delete
-
-## Run CI build
+## Run CI build with storage set to pre-existing Prefect Storage
 ci:
 	@echo "+ $@"
-	@tox -e ci -- --prefect-storage-config-name ${STORAGE_NAME} --tags "configure"
+	@tox -e build -- --tags "reuse" --action "run_nbs"
 .PHONY: ci
 
 ## Delete AWS resources

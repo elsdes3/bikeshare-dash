@@ -19,6 +19,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   PREFECT_CLOUD_API_URL: ${{ secrets.PREFECT_CLOUD_API_URL }}
   PREFECT_CLOUD_API_KEY: ${{ secrets.PREFECT_CLOUD_API_KEY }}
+  PREFECT_CLOUD_STORAGE_ID: ${{ secrets.PREFECT_CLOUD_STORAGE_ID }}
 
 jobs:
   lint:
@@ -30,7 +31,7 @@ jobs:
         python-version: '3.9'
     - run: pip install tox
     - run: make lint
-  create-resources:
+  workflow:
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -39,24 +40,4 @@ jobs:
       with:
         python-version: '3.9'
     - run: pip install tox
-    - run: make aws-create
-  workflow:
-    runs-on: ubuntu-latest
-    needs: create-resources
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.9'
-    - run: pip install tox
     - run: make ci
-  delete-resources:
-    runs-on: ubuntu-latest
-    needs: workflow
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.9'
-    - run: pip install tox
-    - run: make aws-delete

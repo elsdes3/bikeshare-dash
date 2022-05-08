@@ -14,8 +14,9 @@
 2. [Notebooks](#notebooks)
    - [v1 Notebooks](#v1-notebooks)
    - [v2 Notebooks](#v2-notebooks)
-3. [Notes](#notes)
-4. [Project Organization](#project-organization)
+3. [Usage](#usage)
+4. [Notes](#notes)
+5. [Project Organization](#project-organization)
 
 ## [About](#about)
 Build a dashboard about Toronto Bikeshare usage during the months of January to October (inclusive) of the year 2021. See a screenshot of the dashboard (running locally) [here](https://github.com/elsdes3/bikeshare-dash/blob/main/reports/figures/screenshot.png).
@@ -30,6 +31,55 @@ Build a dashboard about Toronto Bikeshare usage during the months of January to 
    - delete all raw and processed data and any charts saved during data analysis
 ### [v2 Notebooks](#v2-notebooks)
 In progress.
+
+## [Usage](#usage)
+1. Create a Prefect Cloud account account, by following steps 1. to 3. from the [Prefect documentation](https://orion-docs.prefect.io/ui/cloud/)
+2. Set the following environment variables
+   ```bash
+   # (needed for OPTION 1 and 2 below) Configure Prefect storage
+   $ export PREFECT_CLOUD_API_URL=<...>
+   $ export PREFECT_CLOUD_API_KEY=<...>
+   # (needed for OPTION 2 below) Set pre-existing storage as Prefect storage
+   $ export PREFECT_CLOUD_STORAGE_ID=<...>
+   ```
+
+   See these two links from the Prefect documentation to get the API environment variables
+   - [`PREFECT_CLOUD_API_URL`](https://orion-docs.prefect.io/ui/cloud/#create-a-workspace)
+   - [`PREFECT_CLOUD_API_KEY`](https://orion-docs.prefect.io/ui/cloud/#create-an-api-key)
+3. Perform the following one-time actions before notebooks can be used to run ETL jobs
+   - [Create cloud storage for Prefect](https://orion-docs.prefect.io/concepts/storage/) (here, AWS S3 will be used)
+     ```bash
+     make aws-create
+     ```
+   - Do one of the following
+     - (OPTION 1) Configure (a) [local environment to use Prefect Cloud](https://orion-docs.prefect.io/ui/cloud/#manually-configuring-cloud-settings), (b) [Prefect storage to use the cloud storage created](https://orion-docs.prefect.io/concepts/storage/#configure-storage) in step 1. above
+       ```bash
+       make build-configure
+       ```
+
+       This newly configured storage will be automatically set as the default Prefect storage. Running this command will also list all Prefect storage that has been configured to-date; from this list, the storage ID for the `PREFECT_CLOUD_STORAGE_ID` environment variable can be found. **If Prefect storage has not been previously configured, then this option must be followed.**
+
+       When following this option
+       - the numerical suffix at the end of the variable `STORAGE_NAME` in the `# GLOBALS` section in the `Makefile` must be incremented by 1
+       - a new value, for this variable (`STORAGE_NAME`) must be set in the `Makefile`
+     - (OPTION 2) (a) [Configure local environment to use Prefect Cloud](https://orion-docs.prefect.io/ui/cloud/#manually-configuring-cloud-settings), (b) [set a pre-existing storage as the default Prefect storage](https://orion-docs.prefect.io/concepts/storage/#setting-storage)
+       ```bash
+       make build-reuse
+       ```
+
+       This option requires that `PREFECT_CLOUD_STORAGE_ID` be set as an environment variable. This is the storage ID of pre-existing Prefect storage. All Prefect storage IDs are listed at the end of OPTION 1 above. **OPTION 2 assumes that OPTION 1 has been previously followed and so the ID of the storage to be used as the default Prefect storage is known.**
+
+     Both of these options will also start an interactive Python environment (Jupyter Lab) to run ETL jobs (get datasets, merge, etc.) using [Prefect flows](https://orion-docs.prefect.io/concepts/flows/). When following OPTION 1, it is possible to replace the starting of this interactive Python environment by the programmatic execution of notebooks (and all ETL jobs, using Prefect flows, contained in those notebooks) by running
+     ```bash
+     make build-configure-auto
+     ```
+
+The CI run is similar OPTION 2 above. So, it assumes that the three environment variables for OPTION 2 above have been set as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). As discussed for OPTION 2 above, `PREFECT_CLOUD_STORAGE_ID` must be set since Prefect storage will not be configured from scratch (as is the case in OPTION 1 above) during the CI run. Instead, pre-existing storage will be set as the default Prefect storage (OPTION 2) and then [used to store the outputs of tasks and flows](https://orion-docs.prefect.io/concepts/storage/). The CI run will not start an interactive Python environment (Jupyter Lab) to run ETL jobs using Prefect flows. Instead, it will programmatically run notebooks thereby running all Prefect flows contained in this notebooks.
+
+To delete cloud storage (AWS S3), run
+```bash
+make aws-delete
+```
 
 ## [Notes](#notes)
 1. A notebook with a filename ending in `_v2.ipynb` contains analysis that is in progress.
