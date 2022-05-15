@@ -7,14 +7,15 @@
 # pylint: disable=invalid-name
 
 
+from io import BytesIO
 from typing import Dict, List
+from urllib.request import urlopen
+from zipfile import ZipFile
 
 import geopandas as gpd
 import pandas as pd
 import pandera as pa
 import requests
-
-from src.utils import log_prefect
 
 ch_essentials_schema = pa.DataFrameSchema(
     columns={
@@ -74,7 +75,10 @@ gdf_schema = pa.DataFrameSchema(
         "AREA_LONG_CODE": pa.Column(pd.StringDtype()),
         "AREA_NAME": pa.Column(pd.StringDtype()),
         "Shape__Area": pa.Column(pa.Float64),
+        # "Shape__Length": pa.Column(pa.Float64),
+        # "LATITUDE": pa.Column(pd.StringDtype(), nullable=True),
         "AREA_LATITUDE": pa.Column(pa.Float64),
+        # "LONGITUDE": pa.Column(pd.StringDtype(), nullable=True),
         "AREA_LONGITUDE": pa.Column(pa.Float64),
     },
     index=pa.Index(pa.Int),
@@ -112,12 +116,92 @@ def get_lat_long(row):
     return row["coordinates"]
 
 
+@pa.check_output(poi_schema)
+def get_poi_data(url: str, poi_params: Dict) -> pd.DataFrame:
+    """Get points of interest within city boundaries."""
+    poi_dtypes_dict = dict(
+        ADDRESS_INFO=pd.StringDtype(),
+        NAME=pd.StringDtype(),
+        CATEGORY=pd.StringDtype(),
+        PHONE=pd.StringDtype(),
+        EMAIL=pd.StringDtype(),
+        WEBSITE=pd.StringDtype(),
+        RECEIVED_DATE=pd.StringDtype(),
+        LINEAR_NAME_FULL=pd.StringDtype(),
+        ADDRESS_FULL=pd.StringDtype(),
+        POSTAL_CODE=pd.StringDtype(),
+        MUNICIPALITY=pd.StringDtype(),
+        CITY=pd.StringDtype(),
+        PLACE_NAME=pd.StringDtype(),
+        LO_NUM_SUF=pd.StringDtype(),
+        HI_NUM=pd.StringDtype(),
+        HI_NUM_SUF=pd.StringDtype(),
+        WARD=pd.StringDtype(),
+        ATTRACTION=pd.StringDtype(),
+        MAP_ACCESS=pd.StringDtype(),
+    )
+    package = requests.get(url, params=poi_params).json()
+    poi_url = package["result"]["resources"][0]["url"]
+    df = pd.read_csv(poi_url)
+    df = df.rename(columns={list(df)[0]: "ID"})
+
+    df[["POI_LONGITUDE", "POI_LATITUDE"]] = pd.DataFrame(
+        df["geometry"].apply(eval).apply(get_lat_long).tolist()
+    )
+    # Verify no duplicates (by name) are in the data
+    assert df[df.duplicated(subset=["NAME"], keep=False)].empty
+    df = df.astype(poi_dtypes_dict)
+    return df
+
+
+@pa.check_output(ch_essentials_schema)
+def get_cultural_hotspots(url: str, params: Dict) -> pd.DataFrame:
+    """Get cultural hotspots within city boundaries."""
+    package = requests.get(url, params=params).json()
+    ch_locations = package["result"]["resources"][0]["url"]
+    ch_locs_dir_path = "data/raw/cultural-hotspot-points-of-interest-wgs84"
+    with urlopen(ch_locations) as zipresp:
+        with ZipFile(BytesIO(zipresp.read())) as zfile:
+            zfile.extractall(ch_locs_dir_path)
+    df = gpd.read_file(f"{ch_locs_dir_path}/CULTURAL_HOTSPOT_WGS84.shp")
+    df = (
+        df.drop_duplicates(
+            subset=["PNT_OF_INT", "LATITUDE", "LONGITUDE"],
+            keep="first",
+        )
+        .reset_index(drop=True)
+        .copy()
+    )
+    df = (
+        df.drop_duplicates(
+            subset=["PNT_OF_INT"],
+            keep="first",
+        )
+        .reset_index(drop=True)
+        .copy()
+    )
+    assert df[df.duplicated(subset=["PNT_OF_INT"], keep=False)].empty
+    df_essentials = (
+        df[["RID", "PNT_OF_INT", "LATITUDE", "LONGITUDE"]]
+        .rename(
+            columns={
+                "RID": "ID",
+                "PNT_OF_INT": "NAME",
+                "LATITUDE": "POI_LATITUDE",
+                "LONGITUDE": "POI_LONGITUDE",
+            }
+        )
+        .astype({"NAME": pd.StringDtype()})
+    )
+    # print(df_essentials.dtypes)
+    return df_essentials
+
+
 @pa.check_output(gdf_schema)
 def get_neighbourhood_boundary_land_area_data(
-    url: str, params: Dict, cols_to_keep: List[str], use_prefect: bool = False
+    url: str, params: Dict, cols_to_keep: List[str]
 ) -> pd.DataFrame:
     """Get citywide neighbourhood boundaries."""
-    log_prefect("Getting neighbourhood boundaries...", True, use_prefect)
     package = requests.get(url, params=params).json()
     files = package["result"]["resources"]
     n_url = [f["url"] for f in files if f["url"].endswith("4326.geojson")][0]
@@ -138,14 +222,34 @@ def get_neighbourhood_boundary_land_area_data(
             "AREA_LONGITUDE": float,
         }
     )[cols_to_keep]
-    log_prefect("Done.", False, use_prefect)
+    # print(len(gdf))
+    # assert len(gdf) == 140
     return gdf
 
 
+@pa.check_output(pub_trans_locations_schema)
+def get_public_transit_locations(url: str, params: Dict) -> pd.DataFrame:
+    """Get public transit locations within city boundaries."""
+    package = requests.get(url, params=params).json()
+    pt_locations = package["result"]["resources"][0]["url"]
+    pt_locs_dir_path = "data/raw/opendata_ttc_schedules"
+    with urlopen(pt_locations) as zipresp:
+        with ZipFile(BytesIO(zipresp.read())) as zfile:
+            zfile.extractall(pt_locs_dir_path)
+    df_pt = pd.read_csv(f"{pt_locs_dir_path}/stops.txt").astype(
+        {
+            "stop_name": pd.StringDtype(),
+            "stop_desc": pd.StringDtype(),
+            "stop_url": pd.StringDtype(),
+        }
+    )
+    df_pt = df_pt.rename(columns={"stop_lat": "lat", "stop_lon": "lon"})
+    return df_pt
+
+
 @pa.check_output(coll_univ_schema)
-def get_coll_univ_locations(use_prefect: bool = False) -> pd.DataFrame:
+def get_coll_univ_locations() -> pd.DataFrame:
     """Get college and university locations within city boundaries."""
-    log_prefect("Getting college and univ locations...", True, use_prefect)
     coll_univ_locations = {
         "centennial": {"lat": 43.7854, "lon": -79.22664},
         "george-brown": {"lat": 43.6761, "lon": -79.4111},
@@ -166,5 +270,4 @@ def get_coll_univ_locations(use_prefect: bool = False) -> pd.DataFrame:
         .reset_index()
         .rename(columns={"index": "institution_id"})
     ).astype({"institution_name": pd.StringDtype()})
-    log_prefect("Done.", False, use_prefect)
     return df_coll_univ
