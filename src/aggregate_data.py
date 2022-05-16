@@ -279,13 +279,13 @@ def aggregate_merged_data(
         .agg(
             {
                 "TRIP__DURATION": "sum",
-                "START_STATION_NAME": "count",
+                "START_STATION_NAME": "nunique",
                 "START_TIME": "count",
                 "CAPACITY": "sum",
-                "PHYSICALKEY": "count",
-                "TRANSITCARD": "count",
-                "CREDITCARD": "count",
-                "PHONE": "count",
+                "PHYSICALKEY": "sum",
+                "TRANSITCARD": "sum",
+                "CREDITCARD": "sum",
+                "PHONE": "sum",
                 "NEIGH_COLLEGES_UNIVS": "sum",
                 # "GEOMETRY": "first",
             }
