@@ -4,5 +4,5 @@ cryptography==37.0.2
 pymysql==1.0.2
 sqlalchemy==1.4.39
 python-dotenv==0.20.0
-snowflake-sqlalchemy==1.3.4
+snowflake-sqlalchemy==1.4.0
 snowflake-connector-python==2.7.9
